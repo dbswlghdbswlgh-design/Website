@@ -120,7 +120,9 @@ body.dawn .cloud,body.dusk .cloud{opacity:0.7}
 .paper-text{position:relative;z-index:1;font-family:'Nanum Myeongjo',serif;font-size:15px;line-height:1.9;color:rgba(255,255,255,.88);white-space:pre-wrap;word-break:break-word}
 .sender-tag{font-size:12px;color:rgba(255,255,255,.38);font-family:'Noto Serif KR',serif;font-weight:300;margin-bottom:10px;letter-spacing:.08em}
 
-.country-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:4px 0 18px}
+.country-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:4px 0 14px;max-height:280px;overflow-y:auto}
+#country-search,#country-search-edit{width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:white;font-family:'Noto Serif KR',serif;font-size:14px;padding:10px 14px;outline:none;margin-bottom:10px;box-sizing:border-box}
+#country-search::placeholder,#country-search-edit::placeholder{color:rgba(255,255,255,0.3)}
 .country-btn{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:12px;padding:12px 8px;cursor:pointer;text-align:center;transition:background .2s,border-color .2s,transform .15s;color:white}
 .country-btn:hover{background:rgba(255,255,255,0.15);transform:translateY(-2px)}
 .country-btn.selected{background:rgba(100,180,255,0.2);border-color:rgba(100,180,255,0.5)}
@@ -154,11 +156,34 @@ body.dawn .cloud,body.dusk .cloud{opacity:0.7}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:4px}
 
 @media(max-width:600px){
-  #nav{padding:12px 14px}
-  .nav-btn{font-size:12px;padding:6px 11px}
-  .modal{padding:22px 16px}
-  #sound-btn,#time-btn{font-size:11px;padding:7px 12px}
-  .nick-name{max-width:55px}
+  #nav{padding:10px 12px;flex-wrap:wrap;gap:6px}
+  #logo{font-size:16px}
+  #logo span{display:none}
+  .nav-btns{gap:6px;flex-wrap:wrap}
+  .nav-btn{font-size:11px;padding:5px 9px}
+  .nick-name{max-width:45px}
+  .nick-country{display:none}
+  .nick-edit{display:none}
+  #hero-inner{padding:10px 18px}
+  #hero h1{font-size:18px}
+  #hero p{font-size:11px}
+  #sea-stats .stat-line{font-size:11px;letter-spacing:.08em}
+  #sound-btn{font-size:10px;padding:7px 10px;left:10px;bottom:16px}
+  #time-btn{font-size:10px;padding:7px 10px;right:10px;bottom:16px}
+  #time-label{font-size:10px;padding:4px 12px;top:68px}
+  .modal{padding:20px 14px;border-radius:14px;max-height:88vh}
+  .modal h2{font-size:18px}
+  .modal textarea{font-size:14px;min-height:120px}
+  .modal-btn{font-size:14px;padding:12px}
+  .country-grid{grid-template-columns:repeat(4,1fr);gap:6px}
+  .country-btn{padding:8px 4px;border-radius:8px}
+  .country-btn .flag{font-size:18px}
+  .country-btn .cname{font-size:9px}
+  #country-search,#country-search-edit{font-size:13px;padding:9px 12px}
+  .paper-text{font-size:14px}
+  #translate-btn{font-size:12px;padding:8px}
+  #report-btn{font-size:11px;padding:8px}
+  .bottle{font-size:22px!important}
 }
 </style>
 </head>
@@ -214,6 +239,7 @@ body.dawn .cloud,body.dusk .cloud{opacity:0.7}
     <h2>🌊 바다로 오신 것을 환영합니다</h2>
     <p class="sub" id="welcome-sub">먼저 국가와 언어를 선택해주세요</p>
     <div id="step-country">
+      <input type="text" id="country-search" placeholder="🔍 나라 이름으로 검색…" oninput="filterGrid('country-grid',this.value)">
       <div class="country-grid" id="country-grid"></div>
       <button class="modal-btn" id="step1-next" onclick="goStep2()" disabled style="opacity:0.4">다음 →</button>
     </div>
@@ -323,36 +349,203 @@ async function toggleSound(){
 
 // ── Countries ──
 const COUNTRIES=[
+  // 아시아
   {code:'KR',flag:'🇰🇷',name:'한국',lang:'ko'},
   {code:'JP',flag:'🇯🇵',name:'일본',lang:'ja'},
   {code:'CN',flag:'🇨🇳',name:'중국',lang:'zh'},
   {code:'TW',flag:'🇹🇼',name:'대만',lang:'zh'},
-  {code:'US',flag:'🇺🇸',name:'미국',lang:'en'},
-  {code:'GB',flag:'🇬🇧',name:'영국',lang:'en'},
-  {code:'AU',flag:'🇦🇺',name:'호주',lang:'en'},
-  {code:'CA',flag:'🇨🇦',name:'캐나다',lang:'en'},
-  {code:'FR',flag:'🇫🇷',name:'프랑스',lang:'fr'},
-  {code:'DE',flag:'🇩🇪',name:'독일',lang:'de'},
-  {code:'ES',flag:'🇪🇸',name:'스페인',lang:'es'},
-  {code:'MX',flag:'🇲🇽',name:'멕시코',lang:'es'},
-  {code:'AR',flag:'🇦🇷',name:'아르헨티나',lang:'es'},
-  {code:'BR',flag:'🇧🇷',name:'브라질',lang:'pt'},
-  {code:'PT',flag:'🇵🇹',name:'포르투갈',lang:'pt'},
+  {code:'HK',flag:'🇭🇰',name:'홍콩',lang:'zh'},
+  {code:'MO',flag:'🇲🇴',name:'마카오',lang:'zh'},
+  {code:'MN',flag:'🇲🇳',name:'몽골',lang:'mn'},
+  {code:'KP',flag:'🇰🇵',name:'북한',lang:'ko'},
   {code:'IN',flag:'🇮🇳',name:'인도',lang:'hi'},
-  {code:'RU',flag:'🇷🇺',name:'러시아',lang:'ru'},
-  {code:'SA',flag:'🇸🇦',name:'사우디',lang:'ar'},
-  {code:'EG',flag:'🇪🇬',name:'이집트',lang:'ar'},
-  {code:'IT',flag:'🇮🇹',name:'이탈리아',lang:'it'},
-  {code:'PL',flag:'🇵🇱',name:'폴란드',lang:'pl'},
-  {code:'NL',flag:'🇳🇱',name:'네덜란드',lang:'nl'},
-  {code:'SE',flag:'🇸🇪',name:'스웨덴',lang:'sv'},
+  {code:'PK',flag:'🇵🇰',name:'파키스탄',lang:'ur'},
+  {code:'BD',flag:'🇧🇩',name:'방글라데시',lang:'bn'},
+  {code:'LK',flag:'🇱🇰',name:'스리랑카',lang:'si'},
+  {code:'NP',flag:'🇳🇵',name:'네팔',lang:'ne'},
+  {code:'BT',flag:'🇧🇹',name:'부탄',lang:'dz'},
+  {code:'MV',flag:'🇲🇻',name:'몰디브',lang:'dv'},
+  {code:'AF',flag:'🇦🇫',name:'아프가니스탄',lang:'ps'},
   {code:'TH',flag:'🇹🇭',name:'태국',lang:'th'},
   {code:'VN',flag:'🇻🇳',name:'베트남',lang:'vi'},
   {code:'ID',flag:'🇮🇩',name:'인도네시아',lang:'id'},
-  {code:'PH',flag:'🇵🇭',name:'필리핀',lang:'en'},
+  {code:'PH',flag:'🇵🇭',name:'필리핀',lang:'fil'},
+  {code:'MY',flag:'🇲🇾',name:'말레이시아',lang:'ms'},
+  {code:'SG',flag:'🇸🇬',name:'싱가포르',lang:'en'},
+  {code:'MM',flag:'🇲🇲',name:'미얀마',lang:'my'},
+  {code:'KH',flag:'🇰🇭',name:'캄보디아',lang:'km'},
+  {code:'LA',flag:'🇱🇦',name:'라오스',lang:'lo'},
+  {code:'TL',flag:'🇹🇱',name:'동티모르',lang:'pt'},
+  {code:'BN',flag:'🇧🇳',name:'브루나이',lang:'ms'},
+  {code:'KZ',flag:'🇰🇿',name:'카자흐스탄',lang:'kk'},
+  {code:'UZ',flag:'🇺🇿',name:'우즈베키스탄',lang:'uz'},
+  {code:'TM',flag:'🇹🇲',name:'투르크메니스탄',lang:'tk'},
+  {code:'KG',flag:'🇰🇬',name:'키르기스스탄',lang:'ky'},
+  {code:'TJ',flag:'🇹🇯',name:'타지키스탄',lang:'tg'},
+  {code:'AZ',flag:'🇦🇿',name:'아제르바이잔',lang:'az'},
+  {code:'AM',flag:'🇦🇲',name:'아르메니아',lang:'hy'},
+  {code:'GE',flag:'🇬🇪',name:'조지아',lang:'ka'},
+  // 중동
+  {code:'SA',flag:'🇸🇦',name:'사우디아라비아',lang:'ar'},
+  {code:'AE',flag:'🇦🇪',name:'아랍에미리트',lang:'ar'},
+  {code:'QA',flag:'🇶🇦',name:'카타르',lang:'ar'},
+  {code:'KW',flag:'🇰🇼',name:'쿠웨이트',lang:'ar'},
+  {code:'BH',flag:'🇧🇭',name:'바레인',lang:'ar'},
+  {code:'OM',flag:'🇴🇲',name:'오만',lang:'ar'},
+  {code:'YE',flag:'🇾🇪',name:'예멘',lang:'ar'},
+  {code:'IQ',flag:'🇮🇶',name:'이라크',lang:'ar'},
+  {code:'IR',flag:'🇮🇷',name:'이란',lang:'fa'},
+  {code:'SY',flag:'🇸🇾',name:'시리아',lang:'ar'},
+  {code:'LB',flag:'🇱🇧',name:'레바논',lang:'ar'},
+  {code:'JO',flag:'🇯🇴',name:'요르단',lang:'ar'},
+  {code:'IL',flag:'🇮🇱',name:'이스라엘',lang:'he'},
+  {code:'PS',flag:'🇵🇸',name:'팔레스타인',lang:'ar'},
   {code:'TR',flag:'🇹🇷',name:'튀르키예',lang:'tr'},
+  // 유럽
+  {code:'GB',flag:'🇬🇧',name:'영국',lang:'en'},
+  {code:'FR',flag:'🇫🇷',name:'프랑스',lang:'fr'},
+  {code:'DE',flag:'🇩🇪',name:'독일',lang:'de'},
+  {code:'IT',flag:'🇮🇹',name:'이탈리아',lang:'it'},
+  {code:'ES',flag:'🇪🇸',name:'스페인',lang:'es'},
+  {code:'PT',flag:'🇵🇹',name:'포르투갈',lang:'pt'},
+  {code:'NL',flag:'🇳🇱',name:'네덜란드',lang:'nl'},
+  {code:'BE',flag:'🇧🇪',name:'벨기에',lang:'fr'},
+  {code:'CH',flag:'🇨🇭',name:'스위스',lang:'de'},
+  {code:'AT',flag:'🇦🇹',name:'오스트리아',lang:'de'},
+  {code:'SE',flag:'🇸🇪',name:'스웨덴',lang:'sv'},
+  {code:'NO',flag:'🇳🇴',name:'노르웨이',lang:'no'},
+  {code:'DK',flag:'🇩🇰',name:'덴마크',lang:'da'},
+  {code:'FI',flag:'🇫🇮',name:'핀란드',lang:'fi'},
+  {code:'IS',flag:'🇮🇸',name:'아이슬란드',lang:'is'},
+  {code:'IE',flag:'🇮🇪',name:'아일랜드',lang:'en'},
+  {code:'PL',flag:'🇵🇱',name:'폴란드',lang:'pl'},
+  {code:'CZ',flag:'🇨🇿',name:'체코',lang:'cs'},
+  {code:'SK',flag:'🇸🇰',name:'슬로바키아',lang:'sk'},
+  {code:'HU',flag:'🇭🇺',name:'헝가리',lang:'hu'},
+  {code:'RO',flag:'🇷🇴',name:'루마니아',lang:'ro'},
+  {code:'BG',flag:'🇧🇬',name:'불가리아',lang:'bg'},
+  {code:'GR',flag:'🇬🇷',name:'그리스',lang:'el'},
+  {code:'HR',flag:'🇭🇷',name:'크로아티아',lang:'hr'},
+  {code:'SI',flag:'🇸🇮',name:'슬로베니아',lang:'sl'},
+  {code:'RS',flag:'🇷🇸',name:'세르비아',lang:'sr'},
+  {code:'BA',flag:'🇧🇦',name:'보스니아',lang:'bs'},
+  {code:'ME',flag:'🇲🇪',name:'몬테네그로',lang:'sr'},
+  {code:'MK',flag:'🇲🇰',name:'북마케도니아',lang:'mk'},
+  {code:'AL',flag:'🇦🇱',name:'알바니아',lang:'sq'},
+  {code:'XK',flag:'🇽🇰',name:'코소보',lang:'sq'},
+  {code:'RU',flag:'🇷🇺',name:'러시아',lang:'ru'},
+  {code:'UA',flag:'🇺🇦',name:'우크라이나',lang:'uk'},
+  {code:'BY',flag:'🇧🇾',name:'벨라루스',lang:'be'},
+  {code:'MD',flag:'🇲🇩',name:'몰도바',lang:'ro'},
+  {code:'LT',flag:'🇱🇹',name:'리투아니아',lang:'lt'},
+  {code:'LV',flag:'🇱🇻',name:'라트비아',lang:'lv'},
+  {code:'EE',flag:'🇪🇪',name:'에스토니아',lang:'et'},
+  {code:'LU',flag:'🇱🇺',name:'룩셈부르크',lang:'fr'},
+  {code:'MC',flag:'🇲🇨',name:'모나코',lang:'fr'},
+  {code:'AD',flag:'🇦🇩',name:'안도라',lang:'ca'},
+  {code:'SM',flag:'🇸🇲',name:'산마리노',lang:'it'},
+  {code:'VA',flag:'🇻🇦',name:'바티칸',lang:'it'},
+  {code:'MT',flag:'🇲🇹',name:'몰타',lang:'mt'},
+  {code:'CY',flag:'🇨🇾',name:'키프로스',lang:'el'},
+  // 아메리카
+  {code:'US',flag:'🇺🇸',name:'미국',lang:'en'},
+  {code:'CA',flag:'🇨🇦',name:'캐나다',lang:'en'},
+  {code:'MX',flag:'🇲🇽',name:'멕시코',lang:'es'},
+  {code:'GT',flag:'🇬🇹',name:'과테말라',lang:'es'},
+  {code:'BZ',flag:'🇧🇿',name:'벨리즈',lang:'en'},
+  {code:'HN',flag:'🇭🇳',name:'온두라스',lang:'es'},
+  {code:'SV',flag:'🇸🇻',name:'엘살바도르',lang:'es'},
+  {code:'NI',flag:'🇳🇮',name:'니카라과',lang:'es'},
+  {code:'CR',flag:'🇨🇷',name:'코스타리카',lang:'es'},
+  {code:'PA',flag:'🇵🇦',name:'파나마',lang:'es'},
+  {code:'CU',flag:'🇨🇺',name:'쿠바',lang:'es'},
+  {code:'JM',flag:'🇯🇲',name:'자메이카',lang:'en'},
+  {code:'HT',flag:'🇭🇹',name:'아이티',lang:'fr'},
+  {code:'DO',flag:'🇩🇴',name:'도미니카공화국',lang:'es'},
+  {code:'TT',flag:'🇹🇹',name:'트리니다드토바고',lang:'en'},
+  {code:'BB',flag:'🇧🇧',name:'바베이도스',lang:'en'},
+  {code:'CO',flag:'🇨🇴',name:'콜롬비아',lang:'es'},
+  {code:'VE',flag:'🇻🇪',name:'베네수엘라',lang:'es'},
+  {code:'GY',flag:'🇬🇾',name:'가이아나',lang:'en'},
+  {code:'SR',flag:'🇸🇷',name:'수리남',lang:'nl'},
+  {code:'BR',flag:'🇧🇷',name:'브라질',lang:'pt'},
+  {code:'EC',flag:'🇪🇨',name:'에콰도르',lang:'es'},
+  {code:'PE',flag:'🇵🇪',name:'페루',lang:'es'},
+  {code:'BO',flag:'🇧🇴',name:'볼리비아',lang:'es'},
+  {code:'CL',flag:'🇨🇱',name:'칠레',lang:'es'},
+  {code:'AR',flag:'🇦🇷',name:'아르헨티나',lang:'es'},
+  {code:'UY',flag:'🇺🇾',name:'우루과이',lang:'es'},
+  {code:'PY',flag:'🇵🇾',name:'파라과이',lang:'es'},
+  // 아프리카
+  {code:'EG',flag:'🇪🇬',name:'이집트',lang:'ar'},
+  {code:'LY',flag:'🇱🇾',name:'리비아',lang:'ar'},
+  {code:'TN',flag:'🇹🇳',name:'튀니지',lang:'ar'},
+  {code:'DZ',flag:'🇩🇿',name:'알제리',lang:'ar'},
+  {code:'MA',flag:'🇲🇦',name:'모로코',lang:'ar'},
+  {code:'SD',flag:'🇸🇩',name:'수단',lang:'ar'},
+  {code:'SS',flag:'🇸🇸',name:'남수단',lang:'en'},
+  {code:'ET',flag:'🇪🇹',name:'에티오피아',lang:'am'},
+  {code:'ER',flag:'🇪🇷',name:'에리트레아',lang:'ti'},
+  {code:'DJ',flag:'🇩🇯',name:'지부티',lang:'fr'},
+  {code:'SO',flag:'🇸🇴',name:'소말리아',lang:'so'},
+  {code:'KE',flag:'🇰🇪',name:'케냐',lang:'sw'},
+  {code:'TZ',flag:'🇹🇿',name:'탄자니아',lang:'sw'},
+  {code:'UG',flag:'🇺🇬',name:'우간다',lang:'sw'},
+  {code:'RW',flag:'🇷🇼',name:'르완다',lang:'rw'},
+  {code:'BI',flag:'🇧🇮',name:'부룬디',lang:'fr'},
+  {code:'MG',flag:'🇲🇬',name:'마다가스카르',lang:'mg'},
+  {code:'MZ',flag:'🇲🇿',name:'모잠비크',lang:'pt'},
+  {code:'ZW',flag:'🇿🇼',name:'짐바브웨',lang:'en'},
+  {code:'ZM',flag:'🇿🇲',name:'잠비아',lang:'en'},
+  {code:'MW',flag:'🇲🇼',name:'말라위',lang:'en'},
+  {code:'ZA',flag:'🇿🇦',name:'남아프리카공화국',lang:'zu'},
+  {code:'LS',flag:'🇱🇸',name:'레소토',lang:'st'},
+  {code:'SZ',flag:'🇸🇿',name:'에스와티니',lang:'ss'},
+  {code:'BW',flag:'🇧🇼',name:'보츠와나',lang:'tn'},
+  {code:'NA',flag:'🇳🇦',name:'나미비아',lang:'en'},
+  {code:'AO',flag:'🇦🇴',name:'앙골라',lang:'pt'},
+  {code:'CD',flag:'🇨🇩',name:'콩고민주공화국',lang:'fr'},
+  {code:'CG',flag:'🇨🇬',name:'콩고공화국',lang:'fr'},
+  {code:'CM',flag:'🇨🇲',name:'카메룬',lang:'fr'},
+  {code:'CF',flag:'🇨🇫',name:'중앙아프리카공화국',lang:'fr'},
+  {code:'TD',flag:'🇹🇩',name:'차드',lang:'fr'},
+  {code:'NE',flag:'🇳🇪',name:'니제르',lang:'fr'},
   {code:'NG',flag:'🇳🇬',name:'나이지리아',lang:'en'},
-  {code:'ZA',flag:'🇿🇦',name:'남아프리카',lang:'en'},
+  {code:'BJ',flag:'🇧🇯',name:'베냉',lang:'fr'},
+  {code:'TG',flag:'🇹🇬',name:'토고',lang:'fr'},
+  {code:'GH',flag:'🇬🇭',name:'가나',lang:'en'},
+  {code:'CI',flag:'🇨🇮',name:'코트디부아르',lang:'fr'},
+  {code:'LR',flag:'🇱🇷',name:'라이베리아',lang:'en'},
+  {code:'SL',flag:'🇸🇱',name:'시에라리온',lang:'en'},
+  {code:'GN',flag:'🇬🇳',name:'기니',lang:'fr'},
+  {code:'GW',flag:'🇬🇼',name:'기니비사우',lang:'pt'},
+  {code:'SN',flag:'🇸🇳',name:'세네갈',lang:'fr'},
+  {code:'GM',flag:'🇬🇲',name:'감비아',lang:'en'},
+  {code:'ML',flag:'🇲🇱',name:'말리',lang:'fr'},
+  {code:'BF',flag:'🇧🇫',name:'부르키나파소',lang:'fr'},
+  {code:'MR',flag:'🇲🇷',name:'모리타니',lang:'ar'},
+  {code:'CV',flag:'🇨🇻',name:'카보베르데',lang:'pt'},
+  {code:'ST',flag:'🇸🇹',name:'상투메프린시페',lang:'pt'},
+  {code:'GQ',flag:'🇬🇶',name:'적도기니',lang:'es'},
+  {code:'GA',flag:'🇬🇦',name:'가봉',lang:'fr'},
+  {code:'KM',flag:'🇰🇲',name:'코모로',lang:'ar'},
+  {code:'SC',flag:'🇸🇨',name:'세이셸',lang:'fr'},
+  {code:'MU',flag:'🇲🇺',name:'모리셔스',lang:'en'},
+  {code:'KI',flag:'🇰🇮',name:'키리바시',lang:'en'},
+  // 오세아니아
+  {code:'AU',flag:'🇦🇺',name:'호주',lang:'en'},
+  {code:'NZ',flag:'🇳🇿',name:'뉴질랜드',lang:'en'},
+  {code:'FJ',flag:'🇫🇯',name:'피지',lang:'en'},
+  {code:'PG',flag:'🇵🇬',name:'파푸아뉴기니',lang:'en'},
+  {code:'SB',flag:'🇸🇧',name:'솔로몬제도',lang:'en'},
+  {code:'VU',flag:'🇻🇺',name:'바누아투',lang:'bi'},
+  {code:'WS',flag:'🇼🇸',name:'사모아',lang:'sm'},
+  {code:'TO',flag:'🇹🇴',name:'통가',lang:'to'},
+  {code:'FM',flag:'🇫🇲',name:'미크로네시아',lang:'en'},
+  {code:'MH',flag:'🇲🇭',name:'마샬제도',lang:'en'},
+  {code:'PW',flag:'🇵🇼',name:'팔라우',lang:'en'},
+  {code:'NR',flag:'🇳🇷',name:'나우루',lang:'en'},
+  {code:'TV',flag:'🇹🇻',name:'투발루',lang:'en'},
 ];
 function countryByCode(code){return COUNTRIES.find(c=>c.code===code)||null;}
 
@@ -691,12 +884,21 @@ function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 
 // ── Country grid ──
+function filterGrid(gridId,query){
+  const q=query.trim().toLowerCase();
+  document.querySelectorAll('#'+gridId+' .country-btn').forEach(btn=>{
+    const nm=btn.querySelector('.cname').textContent.toLowerCase();
+    const cd=(btn.getAttribute('data-code')||'').toLowerCase();
+    btn.style.display=(q===''||nm.includes(q)||cd.includes(q))?'':'none';
+  });
+}
+
 function buildGrid(gridId,selectedCode){
   const grid=document.getElementById(gridId);
   if(!grid)return;
   grid.innerHTML=COUNTRIES.map(c=>{
     const sel=c.code===selectedCode?'selected':'';
-    return '<button class="country-btn '+sel+'" onclick="pickCountry(\''+c.code+'\',\''+gridId+'\')"><span class="flag">'+c.flag+'</span><span class="cname">'+c.name+'</span></button>';
+    return '<button class="country-btn '+sel+'" data-code="'+c.code+'" onclick="pickCountry(\''+c.code+'\',\''+gridId+'\')"><span class="flag">'+c.flag+'</span><span class="cname">'+c.name+'</span></button>';
   }).join('');
 }
 
@@ -827,16 +1029,37 @@ async function translateLetter(){
   const btn=document.getElementById('translate-btn');
   if(isTranslated){
     document.getElementById('read-content').textContent=currentLetterOrigText;
-    btn.textContent='🌐 번역하기';isTranslated=false;return;
+    btn.textContent='🌐 한국어로 번역';isTranslated=false;return;
   }
+  // 이미 한국어면 번역 불필요
+  const isKorean=/[\uAC00-\uD7A3]/.test(currentLetterOrigText);
+  if(isKorean){showToast('이미 한국어로 작성된 편지예요.');return;}
   btn.textContent='번역 중…';btn.disabled=true;
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,messages:[{role:'user',content:'다음 텍스트를 한국어로 자연스럽게 번역해줘. 번역문만 출력하고 다른 말은 하지 마:\n\n'+currentLetterOrigText}]})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:600,
+        messages:[{role:'user',content:'Translate the following text into natural Korean. Output only the translation, nothing else:\n\n'+currentLetterOrigText}]
+      })
+    });
+    if(!res.ok){throw new Error('HTTP '+res.status);}
     const data=await res.json();
-    const translated=data.content&&data.content[0]?data.content[0].text:null;
-    if(translated){document.getElementById('read-content').textContent=translated;btn.textContent='🔄 원문 보기';isTranslated=true;}
-    else{btn.textContent='🌐 번역하기';}
-  }catch(e){btn.textContent='🌐 번역하기';showToast('번역에 실패했어요.');}
+    const translated=data.content&&data.content[0]&&data.content[0].text;
+    if(translated&&translated.trim()){
+      document.getElementById('read-content').textContent=translated.trim();
+      btn.textContent='🔄 원문 보기';
+      isTranslated=true;
+    } else {
+      throw new Error('empty response');
+    }
+  }catch(e){
+    console.error('translate error:',e);
+    btn.textContent='🌐 한국어로 번역';
+    showToast('번역을 불러오지 못했어요. 잠시 후 다시 시도해주세요.');
+  }
   btn.disabled=false;
 }
 
